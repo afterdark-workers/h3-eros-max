@@ -44,10 +44,13 @@ cd /comfyui
 git fetch --depth 1 https://github.com/Comfy-Org/ComfyUI.git tag v0.43.1
 git checkout -f v0.43.1
 uv pip install --python /opt/venv/bin/python -r requirements.txt "transformers>=4.50.3,<5" "huggingface-hub<1.0"
-# PyTorch for CUDA 13 (cu130) — comfy-kitchen's fast kernels (sparse attention, int8) need it. Same torch version, other build.
-TV=$(/opt/venv/bin/python -c "import torch; print(torch.__version__.split('+')[0])")
-uv pip install --python /opt/venv/bin/python --reinstall "torch==$TV" torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
-/opt/venv/bin/python -c "import torch, comfy_kitchen.backends.cuda as k; print('torch', torch.__version__, '| kitchen CUDA ext:', k._EXT_AVAILABLE, k._EXT_ERROR)"
+# FAST=1 (Dockerfile): PyTorch for CUDA 13 (cu130) — comfy-kitchen's fast kernels (sparse attention, int8) need it. Same torch version, other build.
+# FAST=0 keeps the CUDA 12.8 PyTorch: sparse attention falls back to plain attention, and any machine can run it.
+if [ "${FAST:-1}" = 1 ]; then
+  TV=$(/opt/venv/bin/python -c "import torch; print(torch.__version__.split('+')[0])")
+  uv pip install --python /opt/venv/bin/python --reinstall "torch==$TV" torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+fi
+/opt/venv/bin/python -c "import torch, comfy_kitchen.backends.cuda as k; print('FAST', '${FAST:-1}', '| torch', torch.__version__, '| kitchen CUDA ext:', k._EXT_AVAILABLE, k._EXT_ERROR)"
 timeout 300 /opt/venv/bin/python main.py --quick-test-for-ci --cpu
 
 wait_files
