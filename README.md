@@ -38,7 +38,7 @@ RunPod → **Serverless** → **New Endpoint** → **Deploy from a GitHub reposi
 | Where on the page | What to set |
 |---|---|
 | **Endpoint name** | anything — your copy's name is fine |
-| **GPU configuration** | tick every box of 48 GB or more (more boxes = easier to get a GPU) |
+| **GPU configuration** | tick every box of 48 GB or more, on both tabs **Previous generation** and **Latest generation** (more boxes = easier to get a GPU) |
 | **Max workers** | `1` |
 | Click **Advanced settings** to open it: | |
 | → **Active workers** | `0` — nothing to pay while idle |
@@ -46,14 +46,14 @@ RunPod → **Serverless** → **New Endpoint** → **Deploy from a GitHub reposi
 | → **Idle timeout** | `5` sec — or longer if you make several in a row (see below) |
 | → **Enable FlashBoot** | on (the switch) · **Standard** |
 | → **Enable execution timeout** | on · **Execution timeout** `900` sec |
-| → **Allowed CUDA versions** | tick only `13.0` — this worker uses PyTorch for CUDA 13 (the creator's fast sparse attention needs it). With `FAST=0` (below), leave them all as they are |
+| → **Minimum CUDA version** | `13.0` — this worker uses PyTorch for CUDA 13 (the creator's recommended sparse attention needs it). With `RECOMMENDED=0` (below), leave it as it is |
 | → click **Container configuration** to open it → **Container disk** | 80 GB |
 
 Leave everything else as it is, then **Deploy** at the bottom. The first build takes a while (it downloads about 45 GB).
 
 **This build runs close to RunPod's 30-minute build limit.** How long it takes depends on RunPod's network that day. If the build stops with a time-out, nothing is wrong with your copy — build it again: in your copy, edit `README.md` (✏️), add any line, and commit. RunPod starts a new build by itself.
 
-Still timing out after two tries? In your `Dockerfile`, change `ARG FAST=1` to `ARG FAST=0` and commit. That build skips the fast attention: it builds faster and runs on any machine, and videos take longer. Then also set **Allowed CUDA versions** back to all.
+Still timing out after two tries? In your `Dockerfile`, change `ARG RECOMMENDED=1` to `ARG RECOMMENDED=0` and commit. That build skips the creator's sparse attention: it builds faster and runs on any machine, and videos take longer. Then also set **Minimum CUDA version** back to what it was (`12.0`).
 <!-- cp:initializing first=request -->
 The very first request after that waits while a worker pulls the image — this can take a long time. The worker shows **Initializing**. To see what it's doing: endpoint page → **Workers** → click the worker → **Logs** → **System**.
 
@@ -74,7 +74,7 @@ In short: `5` sec means you wait at each start and pay nothing while idle. Longe
 
 ## Or run it on Modal
 
-The same worker also runs on [Modal](https://modal.com) — another serverless GPU service, billed by the second — from `modal_app.py` in this repo. It builds the same `Dockerfile` and answers the same requests as on RunPod (`/run`, `/status/<id>`), so a client that calls RunPod endpoints needs only the other address and key. If the worker doesn't start there with `FAST=1`, use `FAST=0`.
+The same worker also runs on [Modal](https://modal.com) — another serverless GPU service, billed by the second — from `modal_app.py` in this repo. It builds the same `Dockerfile` and answers the same requests as on RunPod (`/run`, `/status/<id>`), so a client that calls RunPod endpoints needs only the other address and key. If the worker doesn't start there with `RECOMMENDED=1`, use `RECOMMENDED=0`.
 
 On your computer, with Python 3.10 or newer, in a copy of your repo (`git clone` it, with your `Dockerfile` lines filled in):
 
